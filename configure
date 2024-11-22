@@ -2,7 +2,7 @@
 
 CXX_STD=CXX17
 JTHREADS=4
-if [[ 'uname' == 'Darwin' ]] ; then
+if [[ `uname` == 'Darwin' ]] ; then
   CMAKE_BUILD_TYPE=Release
 fi
 if [[ $TRAVIS -eq true ]] ; then
