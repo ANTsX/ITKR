@@ -56,9 +56,11 @@ echo "ITK;${itktag}" >> ../data/softwareVersions.csv
 echo "ITKURL;${itkgit}" >> ../data/softwareVersions.csv
 mkdir -p itkb
 cd itkb
-compflags=" -fPIC -O2 -Wno-c++11-long-long "
+compcflags=" -fPIC -O2 -Wno-c++11-long-long "
+compcxxflags=" ${compcflags} "
+osx_sysroot=""
 if [[ `uname` == 'Darwin' ]] ; then
-    compflags=" ${compflags} -isystem /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1 -stdlib=libc++ "
+    osx_sysroot=$(xcrun --sdk macosx --show-sdk-path)
 fi
 cmaker=`${R_HOME}/bin/Rscript -e "x=Sys.which('cmake'); cat(x)"`
 if [[ -z "${cmaker}" ]]; then
@@ -78,8 +80,9 @@ ${cmaker} \
     -DCMAKE_BUILD_TYPE:STRING="${CMAKE_BUILD_TYPE}" \
     -DCMAKE_CXX_STANDARD="17"\
     -DCMAKE_CXX_STANDARD_REQUIRED="YES"\
-    -DCMAKE_C_FLAGS="${CMAKE_C_FLAGS} ${compflags} -DNDEBUG "\
-    -DCMAKE_CXX_FLAGS="${CMAKE_CXX_FLAGS} ${compflags} -DNDEBUG "\
+    -DCMAKE_C_FLAGS="${CMAKE_C_FLAGS} ${compcflags} -DNDEBUG  "\
+    -DCMAKE_CXX_FLAGS="${CMAKE_CXX_FLAGS} ${compcxxflags} -DNDEBUG  "\
+    -DCMAKE_OSX_SYSROOT="${osx_sysroot}"\
     -DITK_USE_GIT_PROTOCOL:BOOL=OFF \
     -DBUILD_SHARED_LIBS=OFF \
     -DBUILD_TESTING:BOOL=OFF \
