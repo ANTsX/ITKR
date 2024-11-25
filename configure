@@ -59,7 +59,8 @@ cd itkb
 compcflags=" -fPIC -O2 -Wno-c++11-long-long "
 compcxxflags=" ${compcflags} "
 if [[ `uname` == 'Darwin' ]] ; then
-    compcxxflags=" ${compcflags} -isystem /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1 -stdlib=libc++ "
+    compcflags=" ${compcflags} -isystem /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1 -stdlib=libc++ "
+    compcxxflags=" ${compcflags} "
 fi
 cmaker=`${R_HOME}/bin/Rscript -e "x=Sys.which('cmake'); cat(x)"`
 if [[ -z "${cmaker}" ]]; then
