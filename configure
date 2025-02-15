@@ -11,7 +11,7 @@ if [[ $TRAVIS -eq true ]] ; then
 fi
 cd ./src
 itkgit=https://github.com/InsightSoftwareConsortium/ITK
-itktag=v5.3rc04 # Adaptive denoising
+itktag=f67dd9ac229f92f966452b1cff45c81b8e370c79 # Adaptive denoising
 # if there is a directory but no git,
 # remove it
 if [[ -d itks ]]; then
