@@ -1,5 +1,5 @@
 #!/bin/bash
-CXX_STD=CXX14
+CXX_STD=CXX17
 CC=`${R_HOME}/bin${R_ARCH_BIN}/R.exe CMD config CC`
 CXX=`${R_HOME}/bin${R_ARCH_BIN}/R.exe CMD config CXX`
 JTHREADS=1

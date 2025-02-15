@@ -18,14 +18,9 @@ environment:
     CRAN: http://cran.rstudio.com
 
   matrix:
-    - R_VERSION: 3.6.3
-      R_VER: 3.6
-
     - R_VERSION: release
-      R_VER: 4.0
+      R_VER: 4.3
 
-    - R_VERSION: 3.5.3
-      R_VER: 3.5
 
 install:
   - ps: Bootstrap
