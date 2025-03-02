@@ -3,6 +3,9 @@
 ## Use the R_HOME indirection to support installations of multiple R version
 # PKG_LIBS = $(shell "Rscript.exe" -e "Rcpp:::LdFlags()")
 
+# Adding this to try to use static libs, since shared libs is off in configure.win
+PKG_LIBS = -static -static-libgcc -L${R_PACKAGE_DIR}/libs/lib
+
 CXX_STD = CXX11
 .PHONY: all libs
 
