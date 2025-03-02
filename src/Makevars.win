@@ -11,9 +11,9 @@ all: $(SHLIB)
 $(SHLIB): libs
 
 libs: ; cd itkb && mingw32-make -j 2 && \
-mingw32-make install || \
-$(MAKE) VERBOSE=1 -j 2 && \
-$(MAKE) install && ls ../ && rm -rf ../itks && \
+mingw32-make install # || \
+# $(MAKE) VERBOSE=1 -j 2 && \
+# $(MAKE) install && ls ../ && rm -rf ../itks && \
 rm -rf ITKInternalEigen3-build/Makefile && \
 rm -rf CMakeFiles/ && rm -rf Modules/ && rm -rf CMakeTmp/ && \
 rm -f Makefile && \
