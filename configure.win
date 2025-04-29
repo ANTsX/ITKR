@@ -8,7 +8,7 @@ cd ./src
 # itkgit=https://github.com/InsightSoftwareConsortium/ITK
 # itktag=81c14ce858a530699ee2fbf7fa48b884ad26b984
 itkgit=https://github.com/InsightSoftwareConsortium/ITK.git
-itktag=f67dd9ac229f92f966452b1cff45c81b8e370c79 # CMAKE_SH fix
+itktag=20edc269b1d9bf9ff27a34db40a438b1b3044f3c # April 28, 2025
 mkdir itks itkb
 # as per https://discourse.itk.org/t/path-length-limitation-in-windows-lifted/545/12
 mkdir -p ../data
