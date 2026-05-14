@@ -43,6 +43,20 @@ else
 	fi
 fi
 rm -rf .git
+
+gdcmfile="./Modules/ThirdParty/GDCM/src/gdcm/Utilities/gdcmext/mec_mr3_io.c"
+if [ -a "${gdcmfile}" ]; then
+    echo "working on mec_mr3_io.c for Windows alignment"
+    str='fname="./Modules/ThirdParty/GDCM/src/gdcm/Utilities/gdcmext/mec_mr3_io.c";'
+    str=${str}'if (file.exists(fname)) {x=readLines(fname); '
+    str=${str}'x = sub("^#ifdef _MSC_VER$", "#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)", x); '
+    str=${str}'if (!any(grepl("^#include <malloc.h>$", x, perl = TRUE))) { '
+    str=${str}'i <- grep("^#include <stdlib.h>$", x, perl = TRUE); '
+    str=${str}'if (length(i) == 1) x <- append(x, "#include <malloc.h>", after = i); } '
+    str=${str}'writeLines(x, fname)}'
+    ${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe -e "${str}"
+fi
+
 cd ../itkb
 
 # compflags=" -fPIC -O2  "
