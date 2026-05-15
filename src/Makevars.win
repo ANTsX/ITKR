@@ -10,7 +10,7 @@ all: $(SHLIB)
 
 $(SHLIB): libs
 
-libs: ; cd itkb && cmake --build . --parallel 2 --target install && \
+libs: ; cd itkb && cmake --build . --parallel 1 --target install && \
 rm -rf ../itks && \
 rm -rf ITKInternalEigen3-build/Makefile && \
 rm -rf CMakeFiles/ && rm -rf Modules/ && rm -rf CMakeTmp/ && \
