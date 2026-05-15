@@ -10,7 +10,6 @@ Authors@R: c(
     person(c("Nicholas", "J"), "Tustison", role = "ctb", email = "NA"),
     person(c("John"), "Muschelli", role = "ctb", email = "NA")
     )
-Maintainer: Brian B. Avants <stnava@gmail.com>
 Description: Make the state of the art image processing library, ITK, available within R. Provide developer access to the ITK framework from within R and, ultimately, support reproducible statistical analyses of medical images via interfacing with other packages.
 License: Apache License (>= 2.0)
 LazyLoad: yes

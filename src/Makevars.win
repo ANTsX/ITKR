@@ -3,7 +3,6 @@
 ## Use the R_HOME indirection to support installations of multiple R version
 # PKG_LIBS = $(shell "Rscript.exe" -e "Rcpp:::LdFlags()")
 
-CXX_STD = CXX11
 .PHONY: all libs
 
 all: $(SHLIB)
@@ -20,4 +19,3 @@ rm -rf Utilities/Doxygen
 # dos2unix ITKInternalEigen3-build/CMakeFiles/3.16.2/CompilerIdC/CMakeCCompilerId.c || \
 # dos2unix ITKInternalEigen3-build/CMakeFiles/3.16.2/CompilerIdCXX/CMakeCXXCompilerId.cpp || \
 # dos2unix ITKInternalEigen3-build/Makefile || \
-
