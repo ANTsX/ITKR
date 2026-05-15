@@ -55,39 +55,12 @@ fi
 hdf5file="./Modules/ThirdParty/HDF5/src/itkhdf5/src/H5private.h"
 if [ -f "${hdf5file}" ]; then
     echo "working on H5private.h for Windows vasprintf"
-    tmpfile="${hdf5file}.tmp"
-    awk '
-        BEGIN { replaced = 0 }
-        /^[[:space:]]*#define[[:space:]]+HDvasprintf[[:space:]]*\(RET,[[:space:]]*FMT,[[:space:]]*A\)[[:space:]]+vasprintf\(RET,[[:space:]]*FMT,[[:space:]]*A\)[[:space:]]*$/ && replaced == 0 {
-            print "    #if defined(__MINGW32__) || defined(__MINGW64__)"
-            print "    static int H5vasprintf(char **ret, const char *fmt, va_list ap) {"
-            print "        va_list ap_copy;"
-            print "        int len;"
-            print "        *ret = NULL;"
-            print "        va_copy(ap_copy, ap);"
-            print "        len = vsnprintf(NULL, 0, fmt, ap_copy);"
-            print "        va_end(ap_copy);"
-            print "        if (len < 0)"
-            print "            return len;"
-            print "        *ret = (char *)malloc((size_t)len + 1);"
-            print "        if (*ret == NULL)"
-            print "            return -1;"
-            print "        return vsnprintf(*ret, (size_t)len + 1, fmt, ap);"
-            print "    }"
-            print "    #define HDvasprintf(RET, FMT, A) H5vasprintf(RET, FMT, A)"
-            print "    #else"
-            print "    #define HDvasprintf(RET, FMT, A) vasprintf(RET, FMT, A)"
-            print "    #endif"
-            replaced = 1
-            next
-        }
-        { print }
-        END {
-            if (replaced == 0) {
-                exit 1
-            }
-        }
-    ' "${hdf5file}" > "${tmpfile}" && mv "${tmpfile}" "${hdf5file}"
+    perl -0pi -e 's/^\s*#define\s+HDvasprintf\s*\(\s*RET\s*,\s*FMT\s*,\s*A\s*\)\s+vasprintf\s*\(\s*RET\s*,\s*FMT\s*,\s*A\s*\)$/    #if de
+        fined(__MINGW32__) || defined(__MINGW64__)\n    static int H5vasprintf(char **ret, const char *fmt, va_list ap) {\n        va_list ap_cop
+        y;\n        int len;\n        *ret = NULL;\n        va_copy(ap_copy, ap);\n        len = vsnprintf(NULL, 0, fmt, ap_copy);\n        va_en
+        d(ap_copy);\n        if (len < 0)\n            return len;\n        *ret = (char *)malloc((size_t)len + 1);\n        if (*ret == NULL)\n
+                   return -1;\n        return vsnprintf(*ret, (size_t)len + 1, fmt, ap);\n    }\n    #define HDvasprintf(RET, FMT, A) H5vasprintf
+        (RET, FMT, A)\n    #else\n    #define HDvasprintf(RET, FMT, A) vasprintf(RET, FMT, A)\n    #endif/m' "${hdf5file}"
 fi
 
 cd ../itkb
