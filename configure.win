@@ -45,23 +45,19 @@ fi
 rm -rf .git
 
 gdcmfile="./Modules/ThirdParty/GDCM/src/gdcm/Utilities/gdcmext/mec_mr3_io.c"
-if [ -a "${gdcmfile}" ]; then
+if [ -f "${gdcmfile}" ]; then
     echo "working on mec_mr3_io.c for Windows alignment"
-    str='fname="./Modules/ThirdParty/GDCM/src/gdcm/Utilities/gdcmext/mec_mr3_io.c";'
-    str=${str}'if (file.exists(fname)) {x=readLines(fname); '
-    str=${str}'x = sub("^#ifdef _MSC_VER$", "#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)", x); '
-    str=${str}'if (!any(grepl("^#include <malloc.h>$", x, perl = TRUE))) { '
-    str=${str}'i <- grep("^#include <stdlib.h>$", x, perl = TRUE); '
-    str=${str}'if (length(i) == 1) x <- append(x, "#include <malloc.h>", after = i); } '
-    str=${str}'writeLines(x, fname)}'
-    ${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe -e "${str}"
+    sed -i 's/^#ifdef _MSC_VER$/#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__MINGW64__)/' "${gdcmfile}"
+    if ! grep -q '^#include <malloc.h>$' "${gdcmfile}"; then
+        sed -i '/^#include <stdlib.h>$/a #include <malloc.h>' "${gdcmfile}"
+    fi
 fi
 
 cd ../itkb
 
-# compflags=" -fPIC -O2  "
+# compflags=\" -fPIC -O2  \"
 # -Wno-c++11-long-long
-# -DVNL_CONFIG_ENABLE_SSE2_ROUNDING:BOOL=OFF \
+# -DVNL_CONFIG_ENABLE_SSE2_ROUNDING:BOOL=OFF \\
 
 compflags=" -fPIC -O2 -lws2_32 -lgdi32 -mwindows -msse4.1 -mssse3 -Wa,-mbig-obj"
 cmaker=`${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe -e "x=Sys.which('cmake'); cat(x)"`
@@ -86,8 +82,8 @@ echo ${cmaker}
 ${cmaker} \
     -G "MinGW Makefiles" \
     -DCMAKE_BUILD_TYPE:STRING="${CMAKE_BUILD_TYPE}" \
-    -DCMAKE_C_FLAGS=" ${CMAKE_C_FLAGS} ${compflags} -DNDEBUG -D_FILE_OFFSET_BITS=64 "\
-    -DCMAKE_CXX_FLAGS=" ${CMAKE_CXX_FLAGS} ${compflags} -DNDEBUG  "\
+    -DCMAKE_C_FLAGS=" ${CMAKE_C_FLAGS} ${compflags} -DNDEBUG -D_FILE_OFFSET_BITS=64 "\\
+    -DCMAKE_CXX_FLAGS=" ${CMAKE_CXX_FLAGS} ${compflags} -DNDEBUG  "\\
     -DCMAKE_SH:BOOL=OFF \
     -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
     -DITK_USE_GIT_PROTOCOL:BOOL=OFF \
@@ -96,7 +92,7 @@ ${cmaker} \
     -DBUILD_EXAMPLES:BOOL=OFF \
     -DCMAKE_INSTALL_PREFIX:PATH="${R_PACKAGE_DIR}"/libs/  \
     -DITK_LEGACY_REMOVE:BOOL=OFF  \
-    -DITK_FUTURE_LEGACY_REMOVE:BOOL=OFF \
+    -DITK_FUTURE_LEGACY_REMOVE:BOOL=OFF  \
     -DITK_BUILD_DEFAULT_MODULES:BOOL=OFF \
     -DModule_GenericLabelInterpolator:BOOL=ON \
     -DKWSYS_USE_MD5:BOOL=ON \
