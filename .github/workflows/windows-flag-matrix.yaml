@@ -14,28 +14,32 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: full
-            disable_link_flags: "0"
-            disable_cpu_flags: "0"
-            disable_bigobj: "0"
-          - name: no-bigobj
-            disable_link_flags: "0"
-            disable_cpu_flags: "0"
-            disable_bigobj: "1"
-          - name: no-cpu
-            disable_link_flags: "0"
-            disable_cpu_flags: "1"
-            disable_bigobj: "0"
           - name: minimal
-            disable_link_flags: "1"
-            disable_cpu_flags: "1"
-            disable_bigobj: "1"
+            enable_link_flags: "0"
+            enable_cpu_flags: "0"
+            enable_bigobj: "0"
+          - name: link-only
+            enable_link_flags: "1"
+            enable_cpu_flags: "0"
+            enable_bigobj: "0"
+          - name: cpu-only
+            enable_link_flags: "0"
+            enable_cpu_flags: "1"
+            enable_bigobj: "0"
+          - name: bigobj-only
+            enable_link_flags: "0"
+            enable_cpu_flags: "0"
+            enable_bigobj: "1"
+          - name: full
+            enable_link_flags: "1"
+            enable_cpu_flags: "1"
+            enable_bigobj: "1"
 
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
-      ITKR_DISABLE_WINDOWS_LINK_FLAGS: ${{ matrix.disable_link_flags }}
-      ITKR_DISABLE_WINDOWS_CPU_FLAGS: ${{ matrix.disable_cpu_flags }}
-      ITKR_DISABLE_WINDOWS_BIGOBJ: ${{ matrix.disable_bigobj }}
+      ITKR_ENABLE_WINDOWS_LINK_FLAGS: ${{ matrix.enable_link_flags }}
+      ITKR_ENABLE_WINDOWS_CPU_FLAGS: ${{ matrix.enable_cpu_flags }}
+      ITKR_ENABLE_WINDOWS_BIGOBJ: ${{ matrix.enable_bigobj }}
 
     name: ${{ matrix.name }}
 

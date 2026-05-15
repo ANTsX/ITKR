@@ -99,13 +99,13 @@ cd ../itkb
 windows_link_flags="-lws2_32 -lgdi32 -mwindows"
 windows_cpu_flags="-msse4.1 -mssse3"
 windows_bigobj_flag="-Wa,-mbig-obj"
-if [ "${ITKR_DISABLE_WINDOWS_LINK_FLAGS}" = "1" ]; then
+if [ "${ITKR_ENABLE_WINDOWS_LINK_FLAGS}" != "1" ]; then
     windows_link_flags=""
 fi
-if [ "${ITKR_DISABLE_WINDOWS_CPU_FLAGS}" = "1" ]; then
+if [ "${ITKR_ENABLE_WINDOWS_CPU_FLAGS}" != "1" ]; then
     windows_cpu_flags=""
 fi
-if [ "${ITKR_DISABLE_WINDOWS_BIGOBJ}" = "1" ]; then
+if [ "${ITKR_ENABLE_WINDOWS_BIGOBJ}" != "1" ]; then
     windows_bigobj_flag=""
 fi
 compflags=" -fPIC -O2 ${windows_link_flags} ${windows_cpu_flags} ${windows_bigobj_flag}"
@@ -128,7 +128,9 @@ fi
 
 echo ${cmaker}
 
-${cmaker} -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE:STRING="${CMAKE_BUILD_TYPE}" -DCMAKE_C_FLAGS=" ${CMAKE_C_FLAGS} ${compflags} -DNDEBUG -D_FILE_OFFSET_BITS=64 " -DCMAKE_CXX_FLAGS=" ${CMAKE_CXX_FLAGS} ${compflags} -DNDEBUG  " -DCMAKE_SH:BOOL=OFF -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DITK_USE_GIT_PROTOCOL:BOOL=OFF -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING:BOOL=OFF -DBUILD_EXAMPLES=OFF -DCMAKE_INSTALL_PREFIX:PATH="${R_PACKAGE_DIR}"/libs/ -DITK_LEGACY_REMOVE:BOOL=OFF -DITK_FUTURE_LEGACY_REMOVE:BOOL=OFF -DITK_BUILD_DEFAULT_MODULES:BOOL=OFF -DModule_GenericLabelInterpolator:BOOL=ON -DKWSYS_USE_MD5:BOOL=ON -DITK_WRAPPING:BOOL=OFF -DModule_MGHIO:BOOL=ON -DModule_ITKDeprecated:BOOL=OFF -DModule_ITKReview:BOOL=ON -DModule_ITKVtkGlue:BOOL=OFF -DModule_AdaptiveDenoising:BOOL=ON -D ITKGroup_Core=ON -D Module_ITKReview=ON -D ITKGroup_Filtering=ON -D ITKGroup_IO=ON -D ITKGroup_Numerics=ON -D ITKGroup_Registration=ON -D ITKGroup_Segmentation=ON -DITK_SKIP_PATH_LENGTH_CHECKS:bool=ON -DVNL_CONFIG_ENABLE_SSE2_ROUNDING:BOOL=ON ../itks/
+itk_c_flags=" -O2 -DNDEBUG -D_FILE_OFFSET_BITS=64 ${windows_link_flags} ${windows_cpu_flags} ${windows_bigobj_flag}"
+itk_cxx_flags=" -O2 -DNDEBUG ${windows_link_flags} ${windows_cpu_flags} ${windows_bigobj_flag}"
+${cmaker} -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE:STRING="${CMAKE_BUILD_TYPE}" -DCMAKE_C_FLAGS="${itk_c_flags}" -DCMAKE_CXX_FLAGS="${itk_cxx_flags}" -DCMAKE_SH:BOOL=OFF -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DITK_USE_GIT_PROTOCOL:BOOL=OFF -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING:BOOL=OFF -DBUILD_EXAMPLES=OFF -DCMAKE_INSTALL_PREFIX:PATH="${R_PACKAGE_DIR}"/libs/ -DITK_LEGACY_REMOVE:BOOL=OFF -DITK_FUTURE_LEGACY_REMOVE:BOOL=OFF -DITK_BUILD_DEFAULT_MODULES:BOOL=OFF -DModule_GenericLabelInterpolator:BOOL=ON -DKWSYS_USE_MD5:BOOL=ON -DITK_WRAPPING:BOOL=OFF -DModule_MGHIO:BOOL=ON -DModule_ITKDeprecated:BOOL=OFF -DModule_ITKReview:BOOL=ON -DModule_ITKVtkGlue:BOOL=OFF -DModule_AdaptiveDenoising:BOOL=ON -D ITKGroup_Core=ON -D Module_ITKReview=ON -D ITKGroup_Filtering=ON -D ITKGroup_IO=ON -D ITKGroup_Numerics=ON -D ITKGroup_Registration=ON -D ITKGroup_Segmentation=ON -DITK_SKIP_PATH_LENGTH_CHECKS:bool=ON -DVNL_CONFIG_ENABLE_SSE2_ROUNDING:BOOL=ON ../itks/
 cd ../
 
 # if [ -n "${APPVEYOR}" ]; then
