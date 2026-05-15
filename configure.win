@@ -33,7 +33,6 @@ else
 	git config core.longpaths true
 	git clone $itkgit itks
 	cd itks
-	git checkout master;
 	git checkout $itktag
 	# removing the longpaths setting
 	if [ -n "${longpaths}" ]; then
@@ -79,39 +78,7 @@ fi
 
 echo ${cmaker}
 
-${cmaker} \
-    -G "MinGW Makefiles" \
-    -DCMAKE_BUILD_TYPE:STRING="${CMAKE_BUILD_TYPE}" \
-    -DCMAKE_C_FLAGS=" ${CMAKE_C_FLAGS} ${compflags} -DNDEBUG -D_FILE_OFFSET_BITS=64 "\\
-    -DCMAKE_CXX_FLAGS=" ${CMAKE_CXX_FLAGS} ${compflags} -DNDEBUG  "\\
-    -DCMAKE_SH:BOOL=OFF \
-    -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
-    -DITK_USE_GIT_PROTOCOL:BOOL=OFF \
-    -DBUILD_SHARED_LIBS=OFF \
-    -DBUILD_TESTING:BOOL=OFF \
-    -DBUILD_EXAMPLES:BOOL=OFF \
-    -DCMAKE_INSTALL_PREFIX:PATH="${R_PACKAGE_DIR}"/libs/  \
-    -DITK_LEGACY_REMOVE:BOOL=OFF  \
-    -DITK_FUTURE_LEGACY_REMOVE:BOOL=OFF  \
-    -DITK_BUILD_DEFAULT_MODULES:BOOL=OFF \
-    -DModule_GenericLabelInterpolator:BOOL=ON \
-    -DKWSYS_USE_MD5:BOOL=ON \
-    -DITK_WRAPPING:BOOL=OFF \
-    -DModule_MGHIO:BOOL=ON \
-    -DModule_ITKDeprecated:BOOL=OFF \
-    -DModule_ITKReview:BOOL=ON \
-    -DModule_ITKVtkGlue:BOOL=OFF \
-    -DModule_AdaptiveDenoising:BOOL=ON \
-    -D ITKGroup_Core=ON \
-    -D Module_ITKReview=ON \
-    -D ITKGroup_Filtering=ON \
-    -D ITKGroup_IO=ON \
-    -D ITKGroup_Numerics=ON \
-    -D ITKGroup_Registration=ON \
-    -D ITKGroup_Segmentation=ON \
-    -DITK_SKIP_PATH_LENGTH_CHECKS:bool=ON \
-    -DVNL_CONFIG_ENABLE_SSE2_ROUNDING:BOOL=ON \
-    ../itks/
+${cmaker} -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE:STRING="${CMAKE_BUILD_TYPE}" -DCMAKE_C_FLAGS=" ${CMAKE_C_FLAGS} ${compflags} -DNDEBUG -D_FILE_OFFSET_BITS=64 " -DCMAKE_CXX_FLAGS=" ${CMAKE_CXX_FLAGS} ${compflags} -DNDEBUG  " -DCMAKE_SH:BOOL=OFF -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DITK_USE_GIT_PROTOCOL:BOOL=OFF -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING:BOOL=OFF -DBUILD_EXAMPLES:BOOL=OFF -DCMAKE_INSTALL_PREFIX:PATH="${R_PACKAGE_DIR}"/libs/ -DITK_LEGACY_REMOVE:BOOL=OFF -DITK_FUTURE_LEGACY_REMOVE:BOOL=OFF -DITK_BUILD_DEFAULT_MODULES:BOOL=OFF -DModule_GenericLabelInterpolator:BOOL=ON -DKWSYS_USE_MD5:BOOL=ON -DITK_WRAPPING:BOOL=OFF -DModule_MGHIO:BOOL=ON -DModule_ITKDeprecated:BOOL=OFF -DModule_ITKReview:BOOL=ON -DModule_ITKVtkGlue:BOOL=OFF -DModule_AdaptiveDenoising:BOOL=ON -D ITKGroup_Core=ON -D Module_ITKReview=ON -D ITKGroup_Filtering=ON -D ITKGroup_IO=ON -D ITKGroup_Numerics=ON -D ITKGroup_Registration=ON -D ITKGroup_Segmentation=ON -DITK_SKIP_PATH_LENGTH_CHECKS:bool=ON -DVNL_CONFIG_ENABLE_SSE2_ROUNDING:BOOL=ON ../itks/
 cd ../
 
 # if [ -n "${APPVEYOR}" ]; then
