@@ -96,7 +96,19 @@ cd ../itkb
 # -Wno-c++11-long-long
 # -DVNL_CONFIG_ENABLE_SSE2_ROUNDING:BOOL=OFF \\
 
-compflags=" -fPIC -O2 -lws2_32 -lgdi32 -mwindows -msse4.1 -mssse3 -Wa,-mbig-obj"
+windows_link_flags="-lws2_32 -lgdi32 -mwindows"
+windows_cpu_flags="-msse4.1 -mssse3"
+windows_bigobj_flag="-Wa,-mbig-obj"
+if [ "${ITKR_DISABLE_WINDOWS_LINK_FLAGS}" = "1" ]; then
+    windows_link_flags=""
+fi
+if [ "${ITKR_DISABLE_WINDOWS_CPU_FLAGS}" = "1" ]; then
+    windows_cpu_flags=""
+fi
+if [ "${ITKR_DISABLE_WINDOWS_BIGOBJ}" = "1" ]; then
+    windows_bigobj_flag=""
+fi
+compflags=" -fPIC -O2 ${windows_link_flags} ${windows_cpu_flags} ${windows_bigobj_flag}"
 cmaker=`${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe -e "x=Sys.which('cmake'); cat(x)"`
 if [ -z "${cmaker}" ]; then
     res=`${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe -e "cat(('cmaker' %in% installed.packages())*1)"`
