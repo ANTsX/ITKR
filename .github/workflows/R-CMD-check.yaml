@@ -67,9 +67,15 @@ jobs:
 
       - name: Live install on Windows
         if: runner.os == 'Windows'
-        shell: cmd
+        shell: pwsh
         run: |
-          R CMD INSTALL --preclean .
+          $log = Join-Path $env:GITHUB_WORKSPACE 'install.log'
+          & R CMD INSTALL --preclean . 2>&1 | Tee-Object -FilePath $log
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host '---- install.log tail ----'
+            Get-Content $log -Tail 200
+            exit $LASTEXITCODE
+          }
 
       - name: Check
         env:
