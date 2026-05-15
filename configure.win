@@ -55,7 +55,39 @@ fi
 hdf5file="./Modules/ThirdParty/HDF5/src/itkhdf5/src/H5private.h"
 if [ -f "${hdf5file}" ]; then
     echo "working on H5private.h for Windows vasprintf"
-    ${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe -e "fname <- './Modules/ThirdParty/HDF5/src/itkhdf5/src/H5private.h'; if (file.exists(fname)) { x <- readLines(fname); old <- '    #define HDvasprintf(RET,FMT,A)  vasprintf(RET,FMT,A)'; if (any(x == old)) { repl <- c('    #if defined(__MINGW32__) || defined(__MINGW64__)', '    static int H5vasprintf(char **ret, const char *fmt, va_list ap) {', '        va_list ap_copy;', '        int len;', '        *ret = NULL;', '        va_copy(ap_copy, ap);', '        len = vsnprintf(NULL, 0, fmt, ap_copy);', '        va_end(ap_copy);', '        if (len < 0)', '            return len;', '        *ret = (char *)malloc((size_t)len + 1);', '        if (*ret == NULL)', '            return -1;', '        return vsnprintf(*ret, (size_t)len + 1, fmt, ap);', '    }', '    #define HDvasprintf(RET,FMT,A)  H5vasprintf(RET,FMT,A)', '    #else', '    #define HDvasprintf(RET,FMT,A)  vasprintf(RET,FMT,A)', '    #endif'); x <- sub(old, paste(repl, collapse = '\\n'), x, fixed = TRUE); writeLines(x, fname) } }"
+    tmpfile="${hdf5file}.tmp"
+    awk '
+        BEGIN { replaced = 0 }
+        /^[[:space:]]*#define[[:space:]]+HDvasprintf[[:space:]]*\(RET,[[:space:]]*FMT,[[:space:]]*A\)[[:space:]]+vasprintf\(RET,[[:space:]]*FMT,[[:space:]]*A\)[[:space:]]*$/ && replaced == 0 {
+            print "    #if defined(__MINGW32__) || defined(__MINGW64__)"
+            print "    static int H5vasprintf(char **ret, const char *fmt, va_list ap) {"
+            print "        va_list ap_copy;"
+            print "        int len;"
+            print "        *ret = NULL;"
+            print "        va_copy(ap_copy, ap);"
+            print "        len = vsnprintf(NULL, 0, fmt, ap_copy);"
+            print "        va_end(ap_copy);"
+            print "        if (len < 0)"
+            print "            return len;"
+            print "        *ret = (char *)malloc((size_t)len + 1);"
+            print "        if (*ret == NULL)"
+            print "            return -1;"
+            print "        return vsnprintf(*ret, (size_t)len + 1, fmt, ap);"
+            print "    }"
+            print "    #define HDvasprintf(RET, FMT, A) H5vasprintf(RET, FMT, A)"
+            print "    #else"
+            print "    #define HDvasprintf(RET, FMT, A) vasprintf(RET, FMT, A)"
+            print "    #endif"
+            replaced = 1
+            next
+        }
+        { print }
+        END {
+            if (replaced == 0) {
+                exit 1
+            }
+        }
+    ' "${hdf5file}" > "${tmpfile}" && mv "${tmpfile}" "${hdf5file}"
 fi
 
 cd ../itkb
