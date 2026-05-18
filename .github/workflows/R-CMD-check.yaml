@@ -76,15 +76,14 @@ jobs:
             check_dir = "check"
           )
           if (is_windows) {
-            details <- rcmdcheck::check_details(check)
             cat("WARNINGS:\n")
-            writeLines(details$warnings)
+            writeLines(check$warnings)
             warning_is_itk_flags <- grepl(
               "Compilation used the following non-portable flag(s):",
-              details$warnings,
+              check$warnings,
               fixed = TRUE
             )
-            non_itk_warnings <- details$warnings[!warning_is_itk_flags]
+            non_itk_warnings <- check$warnings[!warning_is_itk_flags]
             if (length(non_itk_warnings)) {
               cat(non_itk_warnings, sep = "\n")
               stop("R CMD check found warnings other than the known ITK compilation flag warning")
