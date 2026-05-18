@@ -12,8 +12,6 @@ permissions:
 jobs:
   windows-binary:
     runs-on: windows-latest
-    env:
-      PACKAGE_ASSET: ITKR-${{ matrix.r-version }}.zip
 
     strategy:
       fail-fast: false
@@ -30,6 +28,12 @@ jobs:
           r-version: ${{ matrix.r-version }}
           windows-path-include-rtools: true
           windows-path-include-mingw: true
+
+      - name: Standardize R version
+        shell: Rscript {0}
+        run: |
+          rver <- paste(R.version$major, strsplit(R.version$minor, ".", fixed = TRUE)[[1]][2], sep = ".")
+          writeLines(sprintf("PACKAGE_ASSET=ITKR-%s.zip", rver), Sys.getenv("GITHUB_ENV"))
 
       - name: Install package dependencies
         shell: Rscript {0}
@@ -54,7 +58,9 @@ jobs:
           path: ${{ env.PACKAGE_ASSET }}
 
       - name: Publish release asset
-        if: startsWith(github.ref, 'refs/tags/')
+        if: matrix.r-version == 'release' && startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: ${{ env.PACKAGE_ASSET }}
+          fail_on_unmatched_files: true
+          overwrite_files: true
