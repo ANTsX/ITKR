@@ -88,14 +88,14 @@ jobs:
           )
           if (is_windows) {
             details <- rcmdcheck::check_details(check)
-            itk_flag_warning <- grepl(
-              "-Wl,--allow-multiple-definition|-Wl,--enable-auto-import|-Wl,--enable-runtime-pseudo-reloc|-Wl,--verbose|-Wa,-mbig-obj",
+            warning_is_itk_flags <- grepl(
+              "^Compilation used the following non-portable flag\\(s\\):",
               details$warnings
             )
-            non_itk_warnings <- details$warnings[!itk_flag_warning]
+            non_itk_warnings <- details$warnings[!warning_is_itk_flags]
             if (length(non_itk_warnings)) {
               cat(non_itk_warnings, sep = "\n")
-              stop("R CMD check found warnings other than the known ITK Windows flag warnings")
+              stop("R CMD check found warnings other than the known ITK compilation flag warning")
             }
           }
         shell: Rscript {0}
