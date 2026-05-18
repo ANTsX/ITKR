@@ -37,17 +37,15 @@ jobs:
           install.packages("Rcpp", repos = "https://cloud.r-project.org")
 
       - name: Build Windows binary
-        shell: pwsh
+        shell: cmd
         run: |
           R CMD INSTALL --build .
-          $zip = Get-ChildItem -Path ., .. -Recurse -Filter 'ITKR_*.zip' | Select-Object -First 1
-          if (-not $zip) {
-            throw 'ITKR binary zip was not produced.'
-          }
-          $target = Join-Path $PWD $env:PACKAGE_ASSET
-          if ($zip.FullName -ne $target) {
-            Move-Item -Path $zip.FullName -Destination $target
-          }
+          for /f "delims=" %%i in ('dir /b /s ITKR_*.zip') do set ZIPFILE=%%i
+          if not defined ZIPFILE (
+            echo ITKR binary zip was not produced.
+            exit /b 1
+          )
+          copy /y "%ZIPFILE%" "%PACKAGE_ASSET%"
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
