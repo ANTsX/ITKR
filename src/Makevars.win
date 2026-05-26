@@ -3,17 +3,14 @@
 ## Use the R_HOME indirection to support installations of multiple R version
 # PKG_LIBS = $(shell "Rscript.exe" -e "Rcpp:::LdFlags()")
 
-CXX_STD = CXX11
 .PHONY: all libs
 
 all: $(SHLIB)
 
 $(SHLIB): libs
 
-libs: ; cd itkb && mingw32-make -j 2 || \
-mingw32-make install || \
-$(MAKE) VERBOSE=1 -j 2 || \
-$(MAKE) install && ls ../ && rm -rf ../itks && \
+libs: ; cd itkb && cmake --build . --parallel 1 --target install && \
+rm -rf ../itks && \
 rm -rf ITKInternalEigen3-build/Makefile && \
 rm -rf CMakeFiles/ && rm -rf Modules/ && rm -rf CMakeTmp/ && \
 rm -f Makefile && \
@@ -22,4 +19,3 @@ rm -rf Utilities/Doxygen
 # dos2unix ITKInternalEigen3-build/CMakeFiles/3.16.2/CompilerIdC/CMakeCCompilerId.c || \
 # dos2unix ITKInternalEigen3-build/CMakeFiles/3.16.2/CompilerIdCXX/CMakeCXXCompilerId.cpp || \
 # dos2unix ITKInternalEigen3-build/Makefile || \
-

@@ -16,3 +16,6 @@ travis-tool\.sh\.cmd$
 ^_pkgdown\.yml$
 ^docs$
 ^\.github$
+^\.positai$
+^\.claude$
+^install\.log$

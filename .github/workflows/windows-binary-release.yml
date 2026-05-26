@@ -1,0 +1,66 @@
+name: Windows binary release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  windows-binary:
+    runs-on: windows-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        r-version:
+          - release
+          - oldrel-1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.r-version }}
+          windows-path-include-rtools: true
+          windows-path-include-mingw: true
+
+      - name: Standardize R version
+        shell: Rscript {0}
+        run: |
+          rver <- paste(R.version$major, strsplit(R.version$minor, ".", fixed = TRUE)[[1]][2], sep = ".")
+          writeLines(sprintf("PACKAGE_ASSET=ITKR-%s.zip", rver), Sys.getenv("GITHUB_ENV"))
+
+      - name: Install package dependencies
+        shell: Rscript {0}
+        run: |
+          install.packages("Rcpp", repos = "https://cloud.r-project.org")
+
+      - name: Build Windows binary
+        shell: cmd
+        run: |
+          R CMD INSTALL --build .
+          for /f "delims=" %%i in ('dir /b /s ITKR_*.zip') do set ZIPFILE=%%i
+          if not defined ZIPFILE (
+            echo ITKR binary zip was not produced.
+            exit /b 1
+          )
+          copy /y "%ZIPFILE%" "%PACKAGE_ASSET%"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PACKAGE_ASSET }}
+          path: ${{ env.PACKAGE_ASSET }}
+
+      - name: Publish release asset
+        if: matrix.r-version == 'release' && startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.PACKAGE_ASSET }}
+          fail_on_unmatched_files: true
+          overwrite_files: true
