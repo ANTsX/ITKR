@@ -40,7 +40,7 @@ else
 	fi
 	cd itks
 	if [[ -d .git ]]; then
-	    git checkout master;
+	    git checkout main;
 	    git checkout $itktag
 	fi
 fi
