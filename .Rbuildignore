@@ -21,3 +21,4 @@ travis-tool\.sh\.cmd$
 ^install\.log$
 ^src/Makevars$
 ^src/Makevars\.win$
+^CLAUDE\.md$
