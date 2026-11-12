@@ -4,7 +4,15 @@ CC=`${R_HOME}/bin${R_ARCH_BIN}/R.exe CMD config CC`
 CXX=`${R_HOME}/bin${R_ARCH_BIN}/R.exe CMD config CXX`
 JTHREADS=1
 CMAKE_BUILD_TYPE=Release
+# Build ITK with 2 jobs (CRAN's limit) unless MAKEFLAGS asks for more,
+# e.g. MAKEFLAGS=-j8 R CMD INSTALL ITKR
+make_jobs=`echo " ${MAKEFLAGS}" | sed -n -e 's/.*--jobs[= ]*\([0-9][0-9]*\).*/\1/p' -e 's/.* -*[a-zA-Z]*j *\([0-9][0-9]*\).*/\1/p' | head -n 1`
+if [ -z "${make_jobs}" ] || [ "${make_jobs}" -lt 1 ]; then
+  make_jobs=2
+fi
+echo "building ITK with ${make_jobs} jobs"
 cd ./src
+sed "s/@MAKE_JOBS@/${make_jobs}/" Makevars.win.in > Makevars.win
 # itkgit=https://github.com/InsightSoftwareConsortium/ITK
 # itktag=81c14ce858a530699ee2fbf7fa48b884ad26b984
 itkgit=https://github.com/InsightSoftwareConsortium/ITK.git
@@ -111,6 +119,15 @@ if [ -f "${stdflagsfile}" ]; then
     sed -i 's/^  if(MINGW)$/  if(MINGW AND NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")/' "${stdflagsfile}"
 fi
 
+# libpng's headers turn on NEON for every aarch64 build, but ITK only compiles
+# the NEON sources when CMAKE_SYSTEM_PROCESSOR matches (arm|aarch64), and
+# Windows on ARM reports ARM64, so the link fails with undefined *_neon symbols.
+pngcmake="./Modules/ThirdParty/PNG/src/itkpng/CMakeLists.txt"
+if [ -f "${pngcmake}" ] && ! grep -q 'arm|aarch64|ARM64' "${pngcmake}"; then
+    echo "working on itkpng CMakeLists.txt for ARM64 NEON sources"
+    sed -i 's/MATCHES "(arm|aarch64)"/MATCHES "(arm|aarch64|ARM64)"/' "${pngcmake}"
+fi
+
 cd ../itkb
 
 # compflags=\" -fPIC -O2  \"
@@ -128,6 +145,16 @@ if [ "${ITKR_ENABLE_WINDOWS_CPU_FLAGS}" != "1" ]; then
 fi
 if [ "${ITKR_ENABLE_WINDOWS_BIGOBJ}" != "1" ]; then
     windows_bigobj_flag=""
+fi
+# SSE2 rounding (and the optional SSE flags) only exist on x86_64; Windows on
+# ARM (aarch64) has no SSE2, and VNL refuses to configure with it ON.
+r_arch=`${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe -e "cat(R.version[['arch']])"`
+echo "R architecture: ${r_arch}"
+if [ "${r_arch}" = "x86_64" ]; then
+    sse2_rounding=ON
+else
+    sse2_rounding=OFF
+    windows_cpu_flags=""
 fi
 compflags=" -fPIC -O2 ${windows_link_flags} ${windows_cpu_flags} ${windows_bigobj_flag}"
 cmaker=`${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe -e "x=Sys.which('cmake'); cat(x)"`
@@ -151,7 +178,7 @@ echo ${cmaker}
 
 itk_c_flags=" -O2 -DNDEBUG -D_FILE_OFFSET_BITS=64 ${windows_link_flags} ${windows_cpu_flags} ${windows_bigobj_flag}"
 itk_cxx_flags=" -O2 -DNDEBUG ${windows_link_flags} ${windows_cpu_flags} ${windows_bigobj_flag}"
-${cmaker} -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE:STRING="${CMAKE_BUILD_TYPE}" -DCMAKE_C_FLAGS="${itk_c_flags}" -DCMAKE_CXX_FLAGS="${itk_cxx_flags}" -DCMAKE_SH:BOOL=OFF -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DITK_USE_GIT_PROTOCOL:BOOL=OFF -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING:BOOL=OFF -DBUILD_EXAMPLES=OFF -DCMAKE_INSTALL_PREFIX:PATH="${R_PACKAGE_DIR}"/libs/ -DITK_LEGACY_REMOVE:BOOL=OFF -DITK_FUTURE_LEGACY_REMOVE:BOOL=OFF -DITK_BUILD_DEFAULT_MODULES:BOOL=OFF -DModule_GenericLabelInterpolator:BOOL=ON -DKWSYS_USE_MD5:BOOL=ON -DITK_WRAPPING:BOOL=OFF -DModule_MGHIO:BOOL=ON -DModule_ITKDeprecated:BOOL=OFF -DModule_ITKReview:BOOL=ON -DModule_ITKVtkGlue:BOOL=OFF -DModule_AdaptiveDenoising:BOOL=ON -D ITKGroup_Core=ON -D Module_ITKReview=ON -D ITKGroup_Filtering=ON -D ITKGroup_IO=ON -D ITKGroup_Numerics=ON -D ITKGroup_Registration=ON -D ITKGroup_Segmentation=ON -DITK_SKIP_PATH_LENGTH_CHECKS:bool=ON -DVNL_CONFIG_ENABLE_SSE2_ROUNDING:BOOL=ON ../itks/
+${cmaker} -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE:STRING="${CMAKE_BUILD_TYPE}" -DCMAKE_C_FLAGS="${itk_c_flags}" -DCMAKE_CXX_FLAGS="${itk_cxx_flags}" -DCMAKE_SH:BOOL=OFF -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DITK_USE_GIT_PROTOCOL:BOOL=OFF -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING:BOOL=OFF -DBUILD_EXAMPLES=OFF -DCMAKE_INSTALL_PREFIX:PATH="${R_PACKAGE_DIR}"/libs/ -DITK_LEGACY_REMOVE:BOOL=OFF -DITK_FUTURE_LEGACY_REMOVE:BOOL=OFF -DITK_BUILD_DEFAULT_MODULES:BOOL=OFF -DModule_GenericLabelInterpolator:BOOL=ON -DKWSYS_USE_MD5:BOOL=ON -DITK_WRAPPING:BOOL=OFF -DModule_MGHIO:BOOL=ON -DModule_ITKDeprecated:BOOL=OFF -DModule_ITKReview:BOOL=ON -DModule_ITKVtkGlue:BOOL=OFF -DModule_AdaptiveDenoising:BOOL=ON -D ITKGroup_Core=ON -D Module_ITKReview=ON -D ITKGroup_Filtering=ON -D ITKGroup_IO=ON -D ITKGroup_Numerics=ON -D ITKGroup_Registration=ON -D ITKGroup_Segmentation=ON -DITK_SKIP_PATH_LENGTH_CHECKS:bool=ON -DVNL_CONFIG_ENABLE_SSE2_ROUNDING:BOOL=${sse2_rounding} ../itks/
 cd ../
 
 # if [ -n "${APPVEYOR}" ]; then

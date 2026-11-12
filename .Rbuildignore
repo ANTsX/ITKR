@@ -19,3 +19,6 @@ travis-tool\.sh\.cmd$
 ^\.positai$
 ^\.claude$
 ^install\.log$
+^src/Makevars$
+^src/Makevars\.win$
+^CLAUDE\.md$

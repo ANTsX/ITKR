@@ -1,0 +1,250 @@
+name: Release binaries
+
+on:
+  # rebuild binaries for an existing tag
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to build and publish
+        required: true
+        type: string
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  windows-binary:
+    runs-on: windows-latest
+
+    name: windows (${{ matrix.r-version }})
+
+    strategy:
+      fail-fast: false
+      matrix:
+        r-version:
+          - oldrel-1
+          - release
+          - devel
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.r-version }}
+          windows-path-include-rtools: true
+          windows-path-include-mingw: true
+
+      - name: Standardize R version
+        shell: Rscript {0}
+        run: |
+          rver <- paste(R.version$major, strsplit(R.version$minor, ".", fixed = TRUE)[[1]][1], sep = ".")
+          label <- "${{ matrix.r-version }}"
+          # ITKR-<setup-r version>.zip (e.g. ITKR-release.zip, ITKR-oldrel-1.zip) is the
+          # stable name ANTsR/ANTsRCore CI fetch from releases/latest/download/;
+          # ITKR-<rver>.zip keeps the older per-R-version name working;
+          # ITKR-windows-x86_64-<label>.zip pairs with the arm64 build's name
+          writeLines(c(
+            sprintf("PACKAGE_ASSET=ITKR-%s-R%s.zip", label, rver),
+            sprintf("PACKAGE_ALIAS=ITKR-%s.zip", label),
+            sprintf("PACKAGE_RVER=ITKR-%s.zip", rver),
+            sprintf("PACKAGE_ARCH=ITKR-windows-x86_64-%s.zip", label)
+          ), Sys.getenv("GITHUB_ENV"))
+
+      - name: Install package dependencies
+        shell: Rscript {0}
+        run: |
+          install.packages("Rcpp", repos = "https://cloud.r-project.org")
+
+      - name: Build Windows binary
+        shell: cmd
+        run: |
+          R CMD INSTALL --build .
+          for /f "delims=" %%i in ('dir /b /s ITKR_*.zip') do set ZIPFILE=%%i
+          if not defined ZIPFILE (
+            echo ITKR binary zip was not produced.
+            exit /b 1
+          )
+          copy /y "%ZIPFILE%" "%PACKAGE_ASSET%"
+          copy /y "%ZIPFILE%" "%PACKAGE_ALIAS%"
+          copy /y "%ZIPFILE%" "%PACKAGE_RVER%"
+          copy /y "%ZIPFILE%" "%PACKAGE_ARCH%"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PACKAGE_ASSET }}
+          path: |
+            ${{ env.PACKAGE_ASSET }}
+            ${{ env.PACKAGE_ALIAS }}
+            ${{ env.PACKAGE_RVER }}
+            ${{ env.PACKAGE_ARCH }}
+
+  windows-arm64-binary:
+    runs-on: windows-11-arm
+
+    name: windows-arm64 (${{ matrix.r-version }})
+
+    strategy:
+      fail-fast: false
+      matrix:
+        r-version:
+          - oldrel-1
+          - release
+          - devel
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      # Rtools setup from r-universe-org/actions/windows-prep (that action also
+      # expects a package-source artifact, so it can't be used directly)
+      - name: Install Rtools on ARM64
+        shell: pwsh
+        run: |
+          curl -o rtools45.exe -L https://github.com/r-windows/rtools-chocolatey/releases/download/6768/rtools45-aarch64-6768-6492.exe
+          Start-Process "rtools45.exe" -argumentlist "/VERYSILENT /SUPPRESSMSGBOXES" -wait
+          Remove-Item rtools45.exe
+          "RTOOLS45_AARCH64_HOME=C:\rtools45-aarch64" >> $env:GITHUB_ENV
+          "R_PLATFORM_PKGTYPE=windows.binary.clang-aarch64" >> $env:GITHUB_ENV
+
+      # r-lib/actions/setup-r can't install aarch64 R on Windows
+      - uses: r-universe-org/actions/setup-r@v12
+        with:
+          r-version: ${{ matrix.r-version }}
+
+      - name: Install package dependencies
+        shell: Rscript {0}
+        run: |
+          install.packages("Rcpp", repos = "https://cloud.r-project.org")
+
+      - name: Build Windows binary
+        shell: bash
+        run: |
+          R CMD INSTALL --build .
+          shopt -s nullglob
+          files=(ITKR_*.zip)
+          if [ ${#files[@]} -ne 1 ]; then
+            echo "expected one ITKR binary, found: ${files[*]}" >&2
+            exit 1
+          fi
+          rver=$(Rscript -e 'cat(R.version$major, sub("[.].*", "", R.version$minor), sep = ".")')
+          label="${{ matrix.r-version }}"
+          # arm64 needs its own names; ITKR-<label>.zip stays x86_64
+          asset="ITKR-windows-arm64-${label}-R${rver}.zip"
+          alias="ITKR-windows-arm64-${label}.zip"
+          cp "${files[0]}" "$asset"
+          cp "${files[0]}" "$alias"
+          echo "PACKAGE_ASSET=$asset" >> "$GITHUB_ENV"
+          echo "PACKAGE_ALIAS=$alias" >> "$GITHUB_ENV"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PACKAGE_ASSET }}
+          path: |
+            ${{ env.PACKAGE_ASSET }}
+            ${{ env.PACKAGE_ALIAS }}
+
+  macos-binary:
+    runs-on: ${{ matrix.os }}
+
+    name: macos ${{ matrix.os }} (${{ matrix.r-version }})
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # macos-latest is arm64; macos-15-intel is x86_64
+        os:
+          - macos-latest
+          - macos-15-intel
+        r-version:
+          - oldrel-1
+          - release
+          - devel
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.r-version }}
+          use-public-rspm: true
+
+      - name: Install package dependencies
+        shell: Rscript {0}
+        run: |
+          install.packages("Rcpp")
+
+      - name: Build macOS binary
+        shell: bash
+        run: |
+          R CMD INSTALL --build .
+          # R >= 4.7 builds .tar.xz on macOS instead of .tgz
+          shopt -s nullglob
+          files=(ITKR_*.tgz ITKR_*.tar.xz)
+          if [ ${#files[@]} -ne 1 ]; then
+            echo "expected one ITKR binary, found: ${files[*]}" >&2
+            exit 1
+          fi
+          # republish every R version as .tgz so downstream CI handles one format
+          case "${files[0]}" in
+            *.tar.xz) xz -dc "${files[0]}" | gzip > ITKR.tgz ;;
+            *) cp "${files[0]}" ITKR.tgz ;;
+          esac
+          rver=$(Rscript -e 'cat(R.version$major, sub("[.].*", "", R.version$minor), sep = ".")')
+          arch=$(uname -m)
+          label="${{ matrix.r-version }}"
+          # ITKR-macos-<arch>-<setup-r version>.tgz is the stable name
+          # ANTsRCore CI fetches from releases/latest/download/
+          asset="ITKR-macos-${arch}-${label}-R${rver}.tgz"
+          alias="ITKR-macos-${arch}-${label}.tgz"
+          cp ITKR.tgz "$asset"
+          cp ITKR.tgz "$alias"
+          echo "PACKAGE_ASSET=$asset" >> "$GITHUB_ENV"
+          echo "PACKAGE_ALIAS=$alias" >> "$GITHUB_ENV"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PACKAGE_ASSET }}
+          path: |
+            ${{ env.PACKAGE_ASSET }}
+            ${{ env.PACKAGE_ALIAS }}
+
+  publish:
+    needs:
+      - windows-binary
+      - windows-arm64-binary
+      - macos-binary
+    # publish whatever built, so a devel failure doesn't block oldrel/release
+    if: ${{ !cancelled() && (inputs.tag || startsWith(github.ref, 'refs/tags/')) }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: assets
+          pattern: ITKR-*
+          merge-multiple: true
+
+      - name: Publish release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag || github.ref_name }}
+          # downstream CI downloads from releases/latest/download/
+          make_latest: true
+          files: |
+            assets/*.zip
+            assets/*.tgz
+          fail_on_unmatched_files: true
+          overwrite_files: true

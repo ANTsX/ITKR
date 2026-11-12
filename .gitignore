@@ -13,3 +13,5 @@ R/.Rhistory
 tools/
 itk-candidate-module-size.csv
 itk-current-module-size.csv
+src/Makevars
+src/Makevars.win

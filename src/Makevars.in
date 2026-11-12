@@ -5,6 +5,6 @@ all: $(SHLIB)
 
 $(SHLIB): libs
 
-libs: ; cd itkb && $(MAKE) -j 2 && $(MAKE) install && rm -rf ../itks \
+libs: ; cd itkb && $(MAKE) -j @MAKE_JOBS@ && $(MAKE) install && rm -rf ../itks \
 && rm -rf CMakeFiles/ && rm -rf Modules/ && rm -rf CMakeTmp/ \
 rm -f Makefile && rm -rf Utilities/Doxygen 
