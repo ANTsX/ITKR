@@ -102,6 +102,15 @@ if [ -f "${hdf5file}" ]; then
     ' "${hdf5file}" > "${tmpfile}" && mv "${tmpfile}" "${hdf5file}"
 fi
 
+# ITK adds -mthreads for all MinGW toolchains; clang (e.g. Rtools aarch64)
+# ignores it and emits -Wunused-command-line-argument, which R CMD check
+# flags as a significant warning. Only keep it for GCC.
+stdflagsfile="./CMake/ITKSetStandardCompilerFlags.cmake"
+if [ -f "${stdflagsfile}" ]; then
+    echo "working on ITKSetStandardCompilerFlags.cmake for clang -mthreads"
+    sed -i 's/^  if(MINGW)$/  if(MINGW AND NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")/' "${stdflagsfile}"
+fi
+
 cd ../itkb
 
 # compflags=\" -fPIC -O2  \"
