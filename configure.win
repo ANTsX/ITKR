@@ -110,6 +110,15 @@ if [ -f "${hdf5file}" ]; then
     ' "${hdf5file}" > "${tmpfile}" && mv "${tmpfile}" "${hdf5file}"
 fi
 
+# ITK adds -mthreads for all MinGW toolchains; clang (e.g. Rtools aarch64)
+# ignores it and emits -Wunused-command-line-argument, which R CMD check
+# flags as a significant warning. Only keep it for GCC.
+stdflagsfile="./CMake/ITKSetStandardCompilerFlags.cmake"
+if [ -f "${stdflagsfile}" ]; then
+    echo "working on ITKSetStandardCompilerFlags.cmake for clang -mthreads"
+    sed -i 's/^  if(MINGW)$/  if(MINGW AND NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")/' "${stdflagsfile}"
+fi
+
 # libpng's headers turn on NEON for every aarch64 build, but ITK only compiles
 # the NEON sources when CMAKE_SYSTEM_PROCESSOR matches (arm|aarch64), and
 # Windows on ARM reports ARM64, so the link fails with undefined *_neon symbols.
