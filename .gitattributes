@@ -1,0 +1,6 @@
+# bash/sh scripts must keep LF, even with core.autocrlf=true on Windows runners
+configure     text eol=lf
+configure.win text eol=lf
+cleanup       text eol=lf
+cleanup.win   text eol=lf
+*.in          text eol=lf

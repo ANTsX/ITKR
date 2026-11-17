@@ -9,6 +9,14 @@ itkCompileFlags()
 \description{
 call this to get the compilation flags used for ITK and dependent software
 }
+\details{
+Only compile flags are returned (no \code{-l} / \code{-mwindows} link
+flags; packages add those at link time). \code{-fPIC -O2} is used on every
+platform, including WebAssembly (webR) where \code{-fPIC} is required for
+side modules. On Windows \code{-Wa,-mbig-obj} is added (ITK template
+objects exceed the default COFF section limit), and \code{-msse4.1 -mssse3}
+only on x86 builds: other architectures (e.g. aarch64 clang) reject them.
+}
 \examples{
 
 itkCompileFlags()

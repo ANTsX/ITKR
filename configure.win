@@ -1,7 +1,11 @@
 #!/bin/bash
 CXX_STD=CXX17
-CC=`${R_HOME}/bin${R_ARCH_BIN}/R.exe CMD config CC`
-CXX=`${R_HOME}/bin${R_ARCH_BIN}/R.exe CMD config CXX`
+# Rscript.exe/R.exe write CRLF on Windows, so a captured value keeps a
+# trailing "\r" (bash only strips "\n") that then breaks paths and CMake args.
+rs() { "${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe" "$@" | tr -d '\r'; }
+rx() { "${R_HOME}/bin${R_ARCH_BIN}/R.exe" "$@" | tr -d '\r'; }
+CC=`rx CMD config CC`
+CXX=`rx CMD config CXX`
 JTHREADS=1
 CMAKE_BUILD_TYPE=Release
 # Build ITK with 2 jobs (CRAN's limit) unless MAKEFLAGS asks for more,
@@ -23,7 +27,7 @@ mkdir -p ../data
 echo "Dependency;GitTag" > ../data/softwareVersions.csv
 echo "ITK;${itktag}" >> ../data/softwareVersions.csv
 echo "ITKURL;${itkgit}" >> ../data/softwareVersions.csv
-git_exe=`${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe -e "x=Sys.which('git'); cat(x)"`
+git_exe=`rs -e "x=Sys.which('git'); cat(x)"`
 if [ -z "${git_exe}" ]; then
     ${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe -e 'if (!requireNamespace("git2r")) install.packages("git2r")'
     str="repo = git2r::clone(\""
@@ -39,7 +43,9 @@ if [ -z "${git_exe}" ]; then
 else
 	longpaths=`git config --get core.longpaths`
 	git config core.longpaths true
-	git clone $itkgit itks
+	# autocrlf=true on the runner would give CRLF sources, and the anchored
+	# sed/awk patches below (e.g. ^#ifdef _MSC_VER$) would silently not match
+	git -c core.autocrlf=false -c core.eol=lf clone $itkgit itks
 	cd itks
 	git checkout $itktag
 	# removing the longpaths setting
@@ -148,7 +154,7 @@ if [ "${ITKR_ENABLE_WINDOWS_BIGOBJ}" != "1" ]; then
 fi
 # SSE2 rounding (and the optional SSE flags) only exist on x86_64; Windows on
 # ARM (aarch64) has no SSE2, and VNL refuses to configure with it ON.
-r_arch=`${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe -e "cat(R.version[['arch']])"`
+r_arch=`rs -e "cat(R.version[['arch']])"`
 echo "R architecture: ${r_arch}"
 if [ "${r_arch}" = "x86_64" ]; then
     sse2_rounding=ON
@@ -157,16 +163,16 @@ else
     windows_cpu_flags=""
 fi
 compflags=" -fPIC -O2 ${windows_link_flags} ${windows_cpu_flags} ${windows_bigobj_flag}"
-cmaker=`${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe -e "x=Sys.which('cmake'); cat(x)"`
+cmaker=`rs -e "x=Sys.which('cmake'); cat(x)"`
 if [ -z "${cmaker}" ]; then
-    res=`${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe -e "cat(('cmaker' %in% installed.packages())*1)"`
+    res=`rs -e "cat(('cmaker' %in% installed.packages())*1)"`
     if [ $res -eq 0 ];
     then
         git clone https://github.com/stnava/cmaker
         R CMD INSTALL cmaker
         rm -rf cmaker
     fi
-    cmaker=`${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe -e "x=cmaker::cmake()"`
+    cmaker=`rs -e "x=cmaker::cmake()"`
     # cmake_path=`dirname cmaker`
     # export PATH=${PATH}:${cmake_path}
     # cmaker="cmake"

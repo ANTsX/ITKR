@@ -22,3 +22,4 @@ travis-tool\.sh\.cmd$
 ^src/Makevars$
 ^src/Makevars\.win$
 ^CLAUDE\.md$
+^\.gitattributes$
