@@ -88,6 +88,13 @@ itkLibs <- function() {
 #'
 #' call this to get the compilation flags used for ITK and dependent software
 #'
+#' Only compile flags are returned (no \code{-l} / \code{-mwindows} link
+#' flags; packages add those at link time). \code{-fPIC -O2} is used on every
+#' platform, including WebAssembly (webR) where \code{-fPIC} is required for
+#' side modules. On Windows \code{-Wa,-mbig-obj} is added (ITK template
+#' objects exceed the default COFF section limit), and \code{-msse4.1 -mssse3}
+#' only on x86 builds: other architectures (e.g. aarch64 clang) reject them.
+#'
 #' @author Avants BB
 #' @examples
 #'
@@ -97,8 +104,10 @@ itkLibs <- function() {
 itkCompileFlags <- function() {
   str = " -fPIC -O2  "
   if (.Platform$OS.type == "windows") {
-    oflags = c("-lws2_32", "-lgdi32", "-mwindows", 
-               "-msse4.1", "-mssse3", "-Wa,-mbig-obj")
+    oflags = "-Wa,-mbig-obj"
+    if (R.version$arch %in% c("x86_64", "i386", "i686")) {
+      oflags = c("-msse4.1", "-mssse3", oflags)
+    }
     oflags = paste(oflags, collapse = " ")
     str = paste(str, oflags)
   }
