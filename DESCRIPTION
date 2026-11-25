@@ -18,7 +18,7 @@ Imports: Rcpp
 LinkingTo: Rcpp
 NeedsCompilation: yes
 SystemRequirements: cmake, git, clang, GNU make
-URL: http://github.com/stnava/ITKR/
-BugReports: http://github.com/stnava/ITKR/issues
+URL: https://github.com/ANTsX/ITKR, https://antsx.r-universe.dev/ITKR
+BugReports: https://github.com/ANTsX/ITKR/issues
 RoxygenNote: 6.1.1
 Encoding: UTF-8
